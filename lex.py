@@ -44,4 +44,15 @@ agent_chain = AgentExecutor.from_agent_and_tools(
         tags=['conversational-react-description']
     )
 
-agent_chain.run("Ola Mundo!!")
+def main():
+    while True:
+        user_input = input("Usuário: ")
+        if user_input.lower() == "exit":
+            print("Encerrando o programa.")
+            break
+
+        response = agent_chain.run(user_input)
+        print("Lex:", response)
+
+if __name__ == "__main__":
+    main()
