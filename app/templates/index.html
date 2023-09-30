@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Conversa com Lex</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+</head>
+<body>
+    <h1>Lex.AI</h1>
+    <div id="chat-box"></div>
+    <input id="message" autocomplete="off" placeholder="Digite sua mensagem...">
+    <button onclick="sendMessage()"><i class="fa fa-paper-plane"></i></button>
+
+    <script>
+        var socket = io.connect('http://localhost:5000');
+        let aiMessageDiv;
+
+        function addMessage(message, classe) {
+            var chatBox = document.getElementById('chat-box');
+            var messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', classe);
+            messageDiv.textContent = message;
+            chatBox.appendChild(messageDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            if (classe === 'ai-message') {
+                aiMessageDiv = messageDiv;
+            }
+        }
+
+        function sendMessage() {
+            var message = document.getElementById('message').value;
+            if (message.trim() === '') return;
+
+            addMessage(message, 'user-message');
+            socket.emit('message', {message: message});
+            document.getElementById('message').value = '';
+        }
+
+        socket.on('start_message', function() {
+            addMessage('', 'ai-message');
+        });
+
+        socket.on('message', function(data) {
+            if (aiMessageDiv) {
+                aiMessageDiv.textContent += data;
+            }
+        });
+
+        socket.on('end_message', function() {
+            aiMessageDiv = null;
+        });
+        
+        document.getElementById("message").addEventListener("keyup", function(event) {
+            if (event.keyCode === 13) {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>

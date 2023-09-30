@@ -1,0 +1,71 @@
+body {
+    font-family: 'Share Tech Mono', monospace; /* Fonte mais legível mas ainda futurista */
+    margin: 0;
+    padding: 2vh; /* Margem no topo e ao redor em vh */
+    background: linear-gradient(90deg, rgba(0, 0, 0, 1) 0%, rgba(20, 20, 20, 1) 100%);
+    color: #00ff00;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100vh;
+}
+
+h1 {
+    font-size: 2em;
+    margin-bottom: 2vh;
+}
+
+#chat-box {
+    flex-grow: 1;
+    background: rgba(0, 0, 0, 0.8);
+    width: 80%; /* Largura em porcentagem */
+    border: 0.2vh solid #00ff00;
+    overflow-y: auto;
+    margin-bottom: 2vh;
+    border-radius: 1vh;
+    padding: 1vh;
+}
+
+
+.message {
+    padding: 10px;
+    margin: 10px;
+    border-radius: 10px;
+    max-width: 80%;
+    word-wrap: break-word;
+    white-space: pre-line;  /* Respeita as quebras de linha */
+}
+
+.user-message {
+    background-color: #004400;
+    color: #00ff00;
+    align-self: flex-end;
+}
+
+.ai-message {
+    background-color: #222222;
+}
+
+input, button {
+    border: none;
+    background: rgba(0, 0, 0, 0.8);
+    color: #00ff00;
+    border-bottom: 2px solid #00ff00;
+    border-radius: 5px;
+    padding: 10px;
+    margin: 5px;
+    font-size: 16px;
+    width: 700px; /* Mesma largura da área de chat */
+}
+
+input {
+    height: 60px; /* Três linhas de altura */
+}
+
+button {
+    cursor: pointer;
+}
+
+button:hover {
+    background: rgba(0, 255, 0, 0.2);
+}

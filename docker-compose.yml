@@ -1,0 +1,34 @@
+version: '3.4'
+services:
+  weaviate:
+    command:
+      - --host
+      - 0.0.0.0
+      - --port
+      - '8080'
+      - --scheme
+      - http
+    image: semitechnologies/weaviate:1.21.4
+    ports:
+      - 8080:8080
+    restart: on-failure:0
+    environment:
+      OPENAI_APIKEY: $OPENAI_APIKEY
+      QUERY_DEFAULTS_LIMIT: 25
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
+      PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
+      DEFAULT_VECTORIZER_MODULE: 'text2vec-openai'
+      ENABLE_MODULES: 'text2vec-openai,generative-openai'
+      CLUSTER_HOSTNAME: 'node1'
+    volumes:
+      - ./weaviate-data:/var/lib/weaviate  # Este é o mapeamento: diretório_local:diretório_no_container  
+
+  flask-app:
+    build: .
+    ports:
+      - 5000:5000
+    environment:
+      OPENAI_API_KEY: $OPENAI_APIKEY
+      WEAVIATE_URL: 'http://localhost:8080'
+    depends_on:
+      - weaviate
