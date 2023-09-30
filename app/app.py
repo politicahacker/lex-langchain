@@ -68,7 +68,14 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 
 @app.route('/')
 def index():
+    token = request.args.get('token')
+    if token != 'senhasecreta':
+        return "Acesso não autorizado", 403
     return render_template('index.html')
+
+@app.route('/robots.txt')
+def robots():
+    return app.send_static_file('robots.txt')
 
 @socketio.on('message')
 def handle_message(message):

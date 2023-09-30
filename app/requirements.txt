@@ -24,3 +24,5 @@ python-dotenv
 #Flask
 flask
 flask_socketio
+
+gunicorn
