@@ -15,7 +15,7 @@
     <button onclick="sendMessage()"><i class="fa fa-paper-plane"></i></button>
 
     <script>
-        var socket = io.connect('http://localhost:5000');
+        var socket = io.connect(window.location.origin);
         let aiMessageDiv;
 
         function addMessage(message, classe) {

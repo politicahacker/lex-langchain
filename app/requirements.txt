@@ -26,3 +26,4 @@ flask
 flask_socketio
 
 gunicorn
+eventlet

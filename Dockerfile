@@ -9,4 +9,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app /app
 WORKDIR /app
 ENV FLASK_APP=app
-CMD ["gunicorn", "-b", "0.0.0.0:5000", "app:app"]
+CMD ["gunicorn", "-w 1", "-k eventlet", "-b", "0.0.0.0:5000", "--timeout", "120", "app:app"]
