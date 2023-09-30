@@ -80,16 +80,17 @@ def robots():
 @socketio.on('message')
 def handle_message(message):
     user_input = message.get('message')
+    room = request.sid  # Obtém o ID da sessão atual
     
     if not user_input:
-        socketio.emit('message', {'resposta': 'mensagem não fornecida'})
+        socketio.emit('message', {'resposta': 'mensagem não fornecida'}, room=room)  # Envia para o room especificado
         return
 
     response = chat_llm_chain.predict(human_input=user_input)
-    socketio.emit('start_message')
+    socketio.emit('start_message', room=room)  # Envia para o room especificado
     for chunk in response:
-        socketio.emit('message', chunk)
-    socketio.emit('end_message')
+        socketio.emit('message', chunk, room=room)  # Envia para o room especificado
+    socketio.emit('end_message', room=room)  # Envia para o room especificado
 
 if __name__ == "__main__":
     socketio.run(app, host='0.0.0.0', port=5000, debug=True, allow_unsafe_werkzeug=True)
