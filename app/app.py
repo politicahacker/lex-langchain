@@ -12,7 +12,7 @@ for agent in ACTIVE_AGENTS:
     module = import_module(f"agent.{agent}")
     loaded_agents[agent] = module.chat_llm_chain
 
-current_agent = os.getenv('DEFAULT_AGENT', loaded_agents[ACTIVE_AGENTS[0]])
+current_agent_name = os.getenv('DEFAULT_AGENT', loaded_agents[ACTIVE_AGENTS[0]])
 
 
 # Carregando comandos
@@ -40,7 +40,7 @@ def robots():
 
 @socketio.on('connect')
 def initialize_session():
-    session['current_agent'] = current_agent  # Definindo o agente padrão
+    session['current_agent'] = current_agent_name  # Definindo o agente padrão
 
 @socketio.on('select_agent')
 def handle_agent_selection(agent_name):
@@ -51,7 +51,7 @@ def handle_agent_selection(agent_name):
 def handle_message(message):
     user_input = message.get('message')
     room = request.sid  # Obtém o ID da sessão atual
-    current_agent_name = session.get('current_agent', ACTIVE_AGENTS[0])
+    current_agent_name = session.get('current_agent')
     current_agent = loaded_agents[current_agent_name]
         
     if not user_input:

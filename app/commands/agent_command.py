@@ -13,5 +13,5 @@ def run(args, session, ACTIVE_AGENTS, loaded_agents):
             else:
                 return "Agente invalido."
     else:
-        current_agent = session.get('current_agent', ACTIVE_AGENTS[0])
-        return f"O agente atual é {current_agent}"
+        current_agent_name = session.get('current_agent')
+        return f"O agente atual é {current_agent_name}"
