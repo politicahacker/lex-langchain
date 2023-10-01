@@ -1,70 +1,31 @@
 import os
-from dotenv import load_dotenv
-load_dotenv()
-#LLM
-from langchain import OpenAI
-from langchain.chat_models import ChatOpenAI
-from langchain.schema import SystemMessage
-from langchain.prompts import ChatPromptTemplate, HumanMessagePromptTemplate, MessagesPlaceholder
-
-#Memory
-from langchain.memory import ConversationBufferMemory
-
-from langchain.chains import LLMChain
-
-#Agents
-from langchain.agents.conversational.base import ConversationalAgent #Uses GPT-3.5 Format
-from langchain.agents.conversational_chat.base import ConversationalChatAgent #Uses ChatGPT Format
-from langchain.agents import AgentExecutor
-
-from agent.prompts import PREFIX, SUFFIX, FORMAT_INSTRUCTIONS
-from langchain.prompts import PromptTemplate
-from tools.library import Library
-
-
-from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-
-OPENAI_API_KEY = os.getenv('OPENAI_APIKEY')
-
-#Define o LLM
-llm = OpenAI()
-llm = ChatOpenAI(model_name="gpt-3.5-turbo")
-
-#Define os prefixos e configurações
-ai_prefix = "Lex"
-human_prefix = "Usuário"
-
-#Ferramentas
-#biblioteca = Library()
-#library_dir = os.getenv("LIBRARY_DIR") or os.path.join(os.path.dirname(os.path.abspath(__file__)), 'library')
-#library_tools = biblioteca.generate_tools_for_library(library_dir)
-#tools = []# + library_tools
-
-#Memória
-prompt = ChatPromptTemplate.from_messages([
-    SystemMessage(content="You are a chatbot having a conversation with a human."), # The persistent system prompt
-    MessagesPlaceholder(variable_name="chat_history"), # Where the memory will be stored.
-    HumanMessagePromptTemplate.from_template("{human_input}"), # Where the human input will injected
-])
-    
-memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
-
-llm = ChatOpenAI(streaming=True, callbacks=[StreamingStdOutCallbackHandler()])
-
-chat_llm_chain = LLMChain(
-    llm=llm,
-    prompt=prompt,
-    verbose=True,
-    memory=memory,
-)
-
-
-
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, session
 from flask_socketio import SocketIO
+from importlib import import_module
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 
+ACTIVE_AGENTS = ["lex_chatgpt", "lex_llama"]
+
+loaded_agents = {}
+for agent in ACTIVE_AGENTS:
+    module = import_module(f"agent.{agent}")
+    loaded_agents[agent] = module.chat_llm_chain
+
+current_agent = os.getenv('DEFAULT_AGENT', loaded_agents[ACTIVE_AGENTS[0]])
+
+
+# Carregando comandos
+ACTIVE_COMMANDS = ["agent"]
+
+loaded_commands = {}
+for command in ACTIVE_COMMANDS:
+    module = import_module(f"commands.{command}_command")
+    loaded_commands[command] = module.run
+    
 app = Flask(__name__)
-socketio = SocketIO(app, cors_allowed_origins="*")
+app.secret_key = os.getenv('SECRET_KEY', 'supersecret')  # Você precisa definir uma chave secreta para usar sessions
+socketio = SocketIO(app, cors_allowed_origins="*", ping_timeout=120)
 
 @app.route('/')
 def index():
@@ -77,20 +38,39 @@ def index():
 def robots():
     return app.send_static_file('robots.txt')
 
+@socketio.on('connect')
+def initialize_session():
+    session['current_agent'] = current_agent  # Definindo o agente padrão
+
+@socketio.on('select_agent')
+def handle_agent_selection(agent_name):
+    if agent_name in loaded_agents.keys():
+        session['current_agent'] = agent_name
+
 @socketio.on('message')
 def handle_message(message):
     user_input = message.get('message')
     room = request.sid  # Obtém o ID da sessão atual
-    
+    current_agent_name = session.get('current_agent', ACTIVE_AGENTS[0])
+    current_agent = loaded_agents[current_agent_name]
+        
     if not user_input:
-        socketio.emit('message', {'resposta': 'mensagem não fornecida'}, room=room)  # Envia para o room especificado
-        return
+        return None
 
-    response = chat_llm_chain.predict(human_input=user_input)
-    socketio.emit('start_message', room=room)  # Envia para o room especificado
-    for chunk in response:
-        socketio.emit('message', chunk, room=room)  # Envia para o room especificado
+    socketio.emit('start_message')  # Envia para o room especificado
+
+    if user_input.startswith('!'):
+        command, *args = user_input[1:].split()
+        if command in loaded_commands:
+            response = f"[{loaded_commands[command](args, session, ACTIVE_AGENTS, loaded_agents)}]"
+            
+        else:
+            response = "Comando desconhecido. Por favor, tente novamente."
+    else:
+        response = current_agent.run(human_input=user_input)
+
+    socketio.emit('message', response, room=room)  # Envia para o room especificado
     socketio.emit('end_message', room=room)  # Envia para o room especificado
 
 if __name__ == "__main__":
-    socketio.run(app, host='0.0.0.0', port=5000, debug=True, allow_unsafe_werkzeug=True)
+    socketio.run(app, host='0.0.0.0', port=5000, debug=True)

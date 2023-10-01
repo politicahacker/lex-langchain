@@ -18,16 +18,22 @@
     </div>
     
     <script>
-        var socket = io.connect(window.location.origin);
+        var socket = io.connect(window.location.origin, {
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax : 5000,
+            reconnectionAttempts: Infinity
+        });
+        
         let aiMessageDiv;
+        var chatBox = document.getElementById('chat-box');
 
         function addMessage(message, classe) {
-            var chatBox = document.getElementById('chat-box');
             var messageDiv = document.createElement('div');
             messageDiv.classList.add('message', classe);
             messageDiv.textContent = message;
             chatBox.appendChild(messageDiv);
-            //chatBox.scrollTop = chatBox.scrollHeight;
+            chatBox.scrollTop = chatBox.scrollHeight;
 
             if (classe === 'ai-message') {
                 aiMessageDiv = messageDiv;
@@ -54,6 +60,7 @@
         });
 
         socket.on('end_message', function() {
+            chatBox.scrollTop = chatBox.scrollHeight;
             aiMessageDiv = null;
         });
         
