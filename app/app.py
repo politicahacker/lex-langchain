@@ -1,4 +1,4 @@
-import os
+import os, sys
 from flask import Flask, render_template, request, session
 from flask_socketio import SocketIO
 from importlib import import_module
@@ -6,13 +6,15 @@ from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 
 ACTIVE_AGENTS = ["lex_chatgpt", "lex_llama"]
+script_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(script_dir)
 
 loaded_agents = {}
 for agent in ACTIVE_AGENTS:
     module = import_module(f"agent.{agent}")
     loaded_agents[agent] = module.chat_llm_chain
 
-current_agent_name = os.getenv('DEFAULT_AGENT', loaded_agents[ACTIVE_AGENTS[0]])
+current_agent_name = os.getenv('DEFAULT_AGENT', ACTIVE_AGENTS[0])
 
 
 # Carregando comandos
