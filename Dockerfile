@@ -13,7 +13,6 @@ RUN apt-get update && apt-get install -y \
 RUN CMAKE_ARGS="-DLLAMA_BLAS=ON -DLLAMA_BLAS_VENDOR=OpenBLAS" pip install llama-cpp-python
 
 # Copy your application code
-COPY app /app
 WORKDIR /app
 ENV FLASK_APP=app
 CMD ["gunicorn", "-w 1", "-k eventlet", "-b", "0.0.0.0:5000", "--timeout", "120", "app:app"]

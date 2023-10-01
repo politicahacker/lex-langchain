@@ -33,4 +33,4 @@ services:
     depends_on:
       - weaviate
     volumes:
-      - ./app/models:/app/models
+      - ./app:/app
