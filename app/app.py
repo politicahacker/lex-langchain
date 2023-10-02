@@ -39,7 +39,6 @@ socketio = SocketIO(app,
 @app.route('/')
 def index():
     token = request.args.get('token')
-    session['current_agent'] = current_agent_name  # Definindo o agente padrão
     if token != 'senhasecreta':
         return "Acesso não autorizado", 403
     return render_template('index.html')
@@ -50,7 +49,8 @@ def robots():
 
 @socketio.on('connect')
 def initialize_session():
-    pass
+    session['current_agent'] = current_agent_name  # Definindo o agente padrão
+
 
 @socketio.on('select_agent')
 def handle_agent_selection(agent_name):
@@ -79,7 +79,7 @@ def handle_message(message):
             socketio.emit('message', {'result' : response}, room=room)  # Envia para o room especificado
             socketio.emit('end_message', room=room)  # Envia para o room especificado
     else:
-        socketio.start_background_task(message_task, current_agent_name, user_input, room)
+        socketio.start_background_task(message_task, current_agent, user_input, room)
 
 
 @socketio.on('audioMessage')
