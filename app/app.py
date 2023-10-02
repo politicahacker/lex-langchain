@@ -10,7 +10,6 @@ from utils import MODEL_DIRECTORY
 
 transcriber = whisper.load_model("medium", download_root=MODEL_DIRECTORY)
 
-
 ACTIVE_AGENTS = ["lex_chatgpt"]#, "lex_llama"]
 script_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(script_dir)
@@ -40,6 +39,7 @@ socketio = SocketIO(app,
 @app.route('/')
 def index():
     token = request.args.get('token')
+    session['current_agent'] = current_agent_name  # Definindo o agente padrão
     if token != 'senhasecreta':
         return "Acesso não autorizado", 403
     return render_template('index.html')
@@ -50,7 +50,7 @@ def robots():
 
 @socketio.on('connect')
 def initialize_session():
-    session['current_agent'] = current_agent_name  # Definindo o agente padrão
+    pass
 
 @socketio.on('select_agent')
 def handle_agent_selection(agent_name):
@@ -63,7 +63,24 @@ def handle_message(message):
     room = request.sid  # Obtém o ID da sessão atual
     current_agent_name = session.get('current_agent')
     socketio.emit('start_message', room=room)  # Envia para o room especificado
-    socketio.start_background_task(message_task, current_agent_name, user_input, room)
+    current_agent = loaded_agents[current_agent_name]
+        
+    if not user_input:
+        return None
+    if user_input.startswith('!'):
+        command, *args = user_input[1:].split()
+        if command in loaded_commands:
+            response = f"[{loaded_commands[command](args, session, ACTIVE_AGENTS, loaded_agents)}]"
+            socketio.emit('message', {'result' : response}, room=room)  # Envia para o room especificado
+            socketio.emit('end_message', room=room)  # Envia para o room especificado
+            
+        else:
+            response = "Comando desconhecido. Por favor, tente novamente."
+            socketio.emit('message', {'result' : response}, room=room)  # Envia para o room especificado
+            socketio.emit('end_message', room=room)  # Envia para o room especificado
+    else:
+        socketio.start_background_task(message_task, current_agent_name, user_input, room)
+
 
 @socketio.on('audioMessage')
 def handle_audioMessage(audio_blob):
@@ -77,21 +94,8 @@ def audio_task(audio_blob, room):    # Carregar modelo e transcrever o áudio
     result = transcriber.transcribe("temp_audio.wav", verbose=True)
     socketio.emit('transcription', {'result': result['text']}, room=room)
 
-def message_task(current_agent_name, user_input, room):    
-    current_agent = loaded_agents[current_agent_name]
-        
-    if not user_input:
-        return None
-    if user_input.startswith('!'):
-        command, *args = user_input[1:].split()
-        if command in loaded_commands:
-            response = f"[{loaded_commands[command](args, session, ACTIVE_AGENTS, loaded_agents)}]"
-            
-        else:
-            response = "Comando desconhecido. Por favor, tente novamente."
-    else:
-        response = current_agent.run(human_input=user_input)
-
+def message_task(current_agent, user_input, room):    
+    response = current_agent.run(human_input=user_input)
     socketio.emit('message', {'result' : response}, room=room)  # Envia para o room especificado
     socketio.emit('end_message', room=room)  # Envia para o room especificado
 
