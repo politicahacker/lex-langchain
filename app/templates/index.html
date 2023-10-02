@@ -7,17 +7,23 @@
     <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    
+    <script src="{{ url_for('static', filename='js/plugin-audioRecorder.js') }}"></script>
+
 </head>
 <body>
     <h1>Lex.AI</h1>
     <div id="chat-box"></div>
     <div class="footer">
         <input id="message" autocomplete="off" placeholder="Digite sua mensagem...">
-        <button onclick="sendMessage()"><i class="fa fa-paper-plane"></i></button>
+        <div class="button-container">
+            <button id="send-message"><i class="fa fa-paper-plane"></i></button>
+            <button id="clear-history"><i class="fa fa-broom"></i></button>
+        </div>
     </div>
     
     <script>
+
+        //Configuração do Socket
         var socket = io.connect(window.location.origin, {
             reconnection: true,
             reconnectionDelay: 1000,
@@ -25,8 +31,31 @@
             reconnectionAttempts: Infinity
         });
         
+
+        //Funções do Chat
         let aiMessageDiv;
+        let typingDiv;
         var chatBox = document.getElementById('chat-box');
+
+        function addIndicator(text) {
+            typingDiv = document.createElement('div');
+            typingDiv.classList.add('typing-indicator');
+            typingDiv.innerHTML = text + '<span class="dot-anim"></span>';
+            chatBox.appendChild(typingDiv);
+        }
+
+        function removeIndicator() {
+            if (typingDiv) {
+                chatBox.removeChild(typingDiv);
+                typingDiv = null;
+            }
+        }
+
+        // Carregando histórico anterior (se houver)
+        var chatHistory = JSON.parse(localStorage.getItem('chatHistory')) || [];
+        chatHistory.forEach(function(entry) {
+            addMessage(entry.message, entry.classe);
+        });
 
         function addMessage(message, classe) {
             var messageDiv = document.createElement('div');
@@ -34,6 +63,9 @@
             messageDiv.textContent = message;
             chatBox.appendChild(messageDiv);
             chatBox.scrollTop = chatBox.scrollHeight;
+
+            chatHistory.push({message: message, classe: classe});
+            localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
 
             if (classe === 'ai-message') {
                 aiMessageDiv = messageDiv;
@@ -49,13 +81,19 @@
             document.getElementById('message').value = '';
         }
 
+
+        //Funções de escuta do Socket
         socket.on('start_message', function() {
-            addMessage('', 'ai-message');
+            addIndicator('Lex esta pensando')
         });
 
         socket.on('message', function(data) {
+            removeIndicator();
             if (aiMessageDiv) {
                 aiMessageDiv.textContent += data;
+            }
+            else {
+                addMessage(data.result, 'ai-message');
             }
         });
 
@@ -64,12 +102,30 @@
             aiMessageDiv = null;
         });
         
+        socket.on('transcription', function (data) {
+            removeIndicator();
+            console.log("Transcrição do áudio:", data.result);
+            document.getElementById('message').value = data.result;
+        });
+
+        //Funções da interface
         document.getElementById("message").addEventListener("keyup", function(event) {
             if (event.keyCode === 13) {
                 event.preventDefault();
                 sendMessage();
             }
         });
+        
+        document.getElementById("send-message").addEventListener("click", function() {
+            sendMessage();
+        });
+
+        document.getElementById("clear-history").addEventListener("click", function() {
+            localStorage.removeItem('chatHistory');  // Limpa o histórico do localStorage
+            chatHistory = [];  // Limpa o array de histórico
+            chatBox.innerHTML = '';  // Limpa a caixa de chat na página
+        });
+
     </script>
 </body>
 </html>

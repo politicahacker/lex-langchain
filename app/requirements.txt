@@ -29,3 +29,5 @@ gunicorn
 eventlet
 
 huggingface-hub==0.17.3
+
+openai-whisper
