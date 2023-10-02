@@ -6,7 +6,7 @@ COPY app/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 # Instale as dependências necessárias para OpenBLAS e pip (se precisar)
 RUN apt-get update && apt-get install -y \
-    libopenblas-dev \
+    libopenblas-dev ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 # Instale o pacote Python com os argumentos CMake

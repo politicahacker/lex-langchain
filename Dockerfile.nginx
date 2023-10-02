@@ -1,0 +1,6 @@
+# Use uma imagem base do NGINX
+FROM nginx:alpine
+
+# Copie os arquivos de configuração e os certificados
+COPY nginx/nginx.conf /etc/nginx/nginx.conf
+COPY nginx/certs/ /etc/nginx/certs/
