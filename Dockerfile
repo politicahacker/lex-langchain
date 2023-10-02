@@ -16,4 +16,4 @@ RUN CMAKE_ARGS="-DLLAMA_BLAS=ON -DLLAMA_BLAS_VENDOR=OpenBLAS" pip install llama-
 # Copy your application code
 WORKDIR /app
 ENV FLASK_APP=app
-CMD ["gunicorn", "-w 1", "-k eventlet", "-b", "0.0.0.0:5000", "--timeout", "120", "app:app"]
+#CMD ["gunicorn", "-w 1", "-k eventlet", "-b", "0.0.0.0:5000", "--timeout", "120", "app:app"]
