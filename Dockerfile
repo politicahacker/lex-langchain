@@ -1,13 +1,14 @@
 # Dockerfile
 FROM python:3.8
 
-# Copy requirements file and install dependencies
-COPY app/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
 # Instale as dependências necessárias para OpenBLAS e pip (se precisar)
 RUN apt-get update && apt-get install -y \
-    libopenblas-dev ffmpeg \
+    libopenblas-dev trickle ffmpeg \
     && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements file and install dependencies
+COPY app/requirements.txt .
+RUN trickle -d 20480 pip install --no-cache-dir -r requirements.txt
 
 # Instale o pacote Python com os argumentos CMake
 RUN CMAKE_ARGS="-DLLAMA_BLAS=ON -DLLAMA_BLAS_VENDOR=OpenBLAS" pip install llama-cpp-python
