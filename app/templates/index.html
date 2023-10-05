@@ -54,7 +54,7 @@
         // Carregando histórico anterior (se houver)
         var chatHistory = JSON.parse(localStorage.getItem('chatHistory')) || [];
         chatHistory.forEach(function(entry) {
-            addMessage(entry.message, entry.classe);
+            //addMessage(entry.message, entry.classe);
         });
 
         function addMessage(message, classe) {

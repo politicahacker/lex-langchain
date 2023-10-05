@@ -8,9 +8,10 @@ load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 import whisper
 from utils import MODEL_DIRECTORY
 
-transcriber = whisper.load_model("medium", download_root=MODEL_DIRECTORY)
+#transcriber = whisper.load_model("medium", download_root=MODEL_DIRECTORY)
+transcriber =  None
 
-ACTIVE_AGENTS = ["lex_chatgpt"]#, "lex_llama"]
+ACTIVE_AGENTS = ["lex_chatweaviate"]#, "lex_llama"]
 script_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(script_dir)
 
@@ -85,7 +86,10 @@ def handle_message(message):
 @socketio.on('audioMessage')
 def handle_audioMessage(audio_blob):
     room=request.sid
-    socketio.start_background_task(audio_task, audio_blob, room)
+    if transcriber:
+        socketio.start_background_task(audio_task, audio_blob, room)
+    else:
+        socketio.emit('message', {'result' : 'Transcriber esta desligado no momento.'})
 
 def audio_task(audio_blob, room):    # Carregar modelo e transcrever o áudio
     # Salvar o blob de áudio como um arquivo temporário
