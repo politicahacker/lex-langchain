@@ -35,7 +35,7 @@ class DynamicLibraryPromptTemplate(HumanMessagePromptTemplate):
         formatted_sources = self.format_sources(sources)
 
         # Crie o prompt final
-        text = f"Esses são os trechos de documentos da nossa biblioteca.:\n{formatted_sources}\nSempre que citar Atenção:\n1) Inclua o nome dos documentos e número da página utilizados na resposta com o formato ('nomedodocumento', 'numero_pg')\n\nAnonimize todas as referências a nomes de pessoas ou marcas.\nResponda da melhor maneira possível a seguinte \n\npergunta:{human_input}"
+        text = f"Esses são os trechos de documentos da nossa biblioteca.:\n{formatted_sources}\nSempre que citar Atenção:\n1) Inclua o nome dos documentos e número da página utilizados na resposta com o formato ('nomedodocumento', 'numero_pg')\n\nAnonimize todas as referências a nomes de pessoas.\nResponda da melhor maneira possível a seguinte \n\npergunta:{human_input}"
         return HumanMessage(content=text, additional_kwargs=self.additional_kwargs)
 
     def format_sources(self, data):

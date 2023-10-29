@@ -1,17 +1,22 @@
 import os, sys
 from flask import Flask, render_template, request, session
 from flask_socketio import SocketIO
+from twilio.rest import Client
+from twilio.twiml.messaging_response import MessagingResponse
+import requests
 from importlib import import_module
 from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 
 import whisper
 from utils import MODEL_DIRECTORY
+from utils import split_message_by_line
 
-#transcriber = whisper.load_model("medium", download_root=MODEL_DIRECTORY)
-transcriber =  None
+transcriber = whisper.load_model("small", download_root=MODEL_DIRECTORY, device="cpu")
+twilio_client = Client(username=os.getenv('TWILIO_SID'), password=os.getenv('TWILIO_TOKEN'))
+#transcriber =  None
 
-ACTIVE_AGENTS = ["lex_chatweaviate"]#, "lex_llama"]
+ACTIVE_AGENTS = ["lex_chatgpt"]#, "lex_llama"]
 script_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(script_dir)
 
@@ -48,6 +53,36 @@ def index():
 def robots():
     return app.send_static_file('robots.txt')
 
+
+@app.route('/sms', methods=['POST'])
+def sms_reply():
+    # Obter a mensagem enviada pelo usuário via WhatsApp
+    print(request.form)
+    message_body = request.form.get('Body')
+    media_url = request.form.get('MediaUrl0')
+    media_content_type = request.form.get('MediaContentType0')  # Tipo de mídia
+    
+    # Obter o agente atual a partir da sessão (ou usar o padrão)
+    current_agent_name = session.get('current_agent', os.getenv('DEFAULT_AGENT', ACTIVE_AGENTS[0]))
+    current_agent = loaded_agents[current_agent_name]
+
+    resp = MessagingResponse()
+
+    if media_url and media_content_type.startswith('audio/'):  # Se um arquivo de áudio foi recebido
+        socketio.start_background_task(async_transcribe_and_reply, media_url, current_agent, request.form['From'], request.form['To'])
+    elif media_url:
+        resp.message("Tipo de mídia não suportado.")
+    else:
+        # Obter a resposta do bot e dividir em várias mensagens se necessário
+        bot_response = current_agent.run(human_input=message_body)
+        messages_to_send = split_message_by_line(bot_response)
+        
+        for msg in messages_to_send:
+            resp.message(msg)
+    
+    return str(resp)
+
+#Socket for Real Time
 @socketio.on('connect')
 def initialize_session():
     session['current_agent'] = current_agent_name  # Definindo o agente padrão
@@ -83,6 +118,37 @@ def handle_message(message):
         socketio.start_background_task(message_task, current_agent, user_input, room)
 
 
+def async_transcribe_and_reply(media_url, current_agent, user_number, bot_number):    
+    
+
+    # Baixar o arquivo de áudio
+    audio_data = requests.get(media_url).content
+    with open("temp_audio.wav", "wb") as f:
+        f.write(audio_data)
+    
+    # Transcrever o áudio
+    if transcriber:
+        result = transcriber.transcribe("temp_audio.wav", verbose=True)
+        message_body = result['text']
+    else:
+        twilio_client.messages.create(
+        body='Transcriber está desligado no momento.',
+        from_=bot_number,
+        to=user_number
+        )
+        return None
+
+    # Obter a resposta do bot e dividir em várias mensagens se necessário
+    bot_response = current_agent.run(human_input=message_body)
+    messages_to_send = split_message_by_line(bot_response)
+    
+    for msg in messages_to_send:
+        twilio_client.messages.create(
+            body=msg,
+            from_=bot_number,
+            to=user_number
+        )
+    
 @socketio.on('audioMessage')
 def handle_audioMessage(audio_blob):
     room=request.sid

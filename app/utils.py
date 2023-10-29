@@ -19,3 +19,38 @@ def download_model(repo, model_file):
         )
 
     return(model_path)
+
+def split_message_by_line(message, max_length=1600):
+    """
+    Divide uma mensagem em várias partes menores com base nas quebras de linha.
+    
+    Args:
+    - message (str): A mensagem a ser dividida.
+    - max_length (int): O tamanho máximo de cada parte.
+    
+    Returns:
+    - List[str]: Uma lista contendo as partes da mensagem.
+    """
+    lines = message.split('\n')
+    current_length = 0
+    current_message = ''
+    messages = []
+    
+    for line in lines:
+        line_length = len(line) + 1  # +1 para o caractere de quebra de linha
+        
+        # Checar se adicionar a próxima linha excederia o limite de caracteres
+        if current_length + line_length > max_length:
+            messages.append(current_message)
+            current_length = 0
+            current_message = ''
+        
+        # Adicionar a linha à mensagem atual e atualizar o tamanho
+        current_message += (line + '\n') if current_length > 0 else line
+        current_length += line_length
+        
+    # Adicionar a última mensagem se não estiver vazia
+    if current_message:
+        messages.append(current_message)
+    
+    return messages
