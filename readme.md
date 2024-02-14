@@ -15,6 +15,9 @@ As seguintes dependências são necessárias para executar o projeto:
 - pdf2image
 - pdfminer.six
 - python-dotenv
+- twilio
+- firebase_admin
+- langchain-community
 
 Instale as dependências usando:
 
