@@ -30,7 +30,7 @@ Thought: Do I need to use a tool? No
 SUFFIX = """Comece!
 
 Histórico anterior de conversa:
-{chat_history}
+{history}
 
 Novo input: {input}
 {agent_scratchpad}"""
