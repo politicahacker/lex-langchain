@@ -34,4 +34,4 @@ openai-whisper
 
 twilio
 firebase_admin
-langchain_community
+langchain-community
