@@ -18,6 +18,7 @@ As seguintes dependências são necessárias para executar o projeto:
 - twilio
 - firebase_admin
 - langchain-community
+- langchain-openai
 
 Instale as dependências usando:
 

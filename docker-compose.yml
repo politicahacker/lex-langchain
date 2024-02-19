@@ -30,7 +30,11 @@ services:
       - 5000:5000
     environment:
       OPENAI_API_KEY: $OPENAI_APIKEY
-      WEAVIATE_URL: 'http://localhost:8080'
+      WEAVIATE_URL: $WEAVIATE_URL
+      WEAVIATE_API_KEY: $WEAVIATE_API_KEY
+      TWILIO_SID: $TWILIO_SID
+      TWILIO_TOKEN: $TWILIO_TOKEN
+
     depends_on:
       - weaviate
     volumes:
@@ -41,7 +45,7 @@ services:
       context: .
       dockerfile: Dockerfile.nginx
     ports:
-      - 80:80
+      - 1337:80
       - 443:443
     depends_on:
       - flask-app

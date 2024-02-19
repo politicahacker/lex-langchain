@@ -1,5 +1,5 @@
 # Dockerfile
-FROM python:3.8
+FROM python:3.9
 
 # Instale as dependências necessárias para OpenBLAS e pip (se precisar)
 RUN apt-get update && apt-get install -y \
@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
 
 # Copy requirements file and install dependencies
 COPY app/requirements.txt .
+RUN trickled
 RUN trickle -d 20480 pip install --no-cache-dir -r requirements.txt
 
 # Instale o pacote Python com os argumentos CMake
