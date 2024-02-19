@@ -1,5 +1,6 @@
 import os
 from huggingface_hub import hf_hub_download
+import tiktoken
 
 MODEL_DIRECTORY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models")
 
@@ -54,3 +55,9 @@ def split_message_by_line(message, max_length=1600):
         messages.append(current_message)
     
     return messages
+
+def count_tokens(string: str, model_name: str) -> int:
+    """Returns the number of tokens in a text string using a specified encoding."""
+    encoding = tiktoken.encoding_for_model(model_name)
+    num_tokens = len(encoding.encode(string))
+    return num_tokens
