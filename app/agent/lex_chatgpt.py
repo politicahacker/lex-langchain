@@ -1,6 +1,7 @@
 import os
 from flask import session
 
+from ..app import firestoreClient
 
 #LLM
 from langchain_community.llms import OpenAI
@@ -26,8 +27,17 @@ OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 #Define o LLM
 llm = ChatOpenAI(model_name="gpt-3.5-turbo")
 
+
+
+promptDoc = firestoreClient.collection(
+    "settings_prompts"
+).document("default").get()
+        
+if promptDoc.exists():
+    prompt = promptDoc.to_dict()['prompt']
+
 prompt = ChatPromptTemplate.from_messages([
-    SystemMessage(content=SYS_PROMPT), # The persistent system prompt
+    SystemMessage(content=prompt), #SYS_PROMPT), # The persistent system prompt
     MessagesPlaceholder(variable_name="history"), # Where the memory will be stored.
     HumanMessagePromptTemplate.from_template("{human_input}"), # Where the human input will injected
 ])
@@ -35,24 +45,18 @@ prompt = ChatPromptTemplate.from_messages([
 
 # TODO: use different memory_key for each session
 
-import firebase_admin
-from firebase_admin import credentials, firestore
-script_dir = os.path.dirname(os.path.abspath(__file__))
-cred = credentials.Certificate(f"{script_dir}/../keys/politicalai-lex.json")
-app = firebase_admin.initialize_app(cred)
-client = firestore.client(app=app)
-
 message_history = FirestoreChatMessageHistory(
     collection_name="lex-history",
     session_id="default",
     user_id="no-user-defined",
-    firestore_client=client,
+    firestore_client=firestoreClient,
 )
 
 
 
 # memory = ConversationBufferMemory(memory_key=f"chat_history", chat_memory=message_history, return_messages=True)
 memory = ConversationBufferMemory(chat_memory=message_history, return_messages=True)
+# memory.chat_memory = message_history
 
 print(f"MESSAGES: {memory}")
 ## memory = ConversationBufferMemory(memory_key=f"chat_history", return_messages=True)

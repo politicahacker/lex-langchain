@@ -24,6 +24,16 @@ sys.path.append(script_dir)
 import hashlib
 
 
+# carregar Firestore
+
+import firebase_admin
+from firebase_admin import credentials, firestore
+script_dir = os.path.dirname(os.path.abspath(__file__))
+cred = credentials.Certificate(f"{script_dir}/keys/politicalai-lex.json")
+app = firebase_admin.initialize_app(cred)
+firestoreClient = firestore.client(app=app)
+
+
 # # Carregando agentes
 # loaded_agents = {}
 # for agent in ACTIVE_AGENTS:
@@ -74,6 +84,22 @@ def sms_reply():
     whatsapp_number = request.form.get('From').split("whatsapp:")[-1]
     hashnumber = hashlib.md5(whatsapp_number.encode()).hexdigest();
 
+    # TODO: salvar profileName do usuário no banco
+    # TODO: salvar lastMessage como timestamp do usuário
+    # TODO: incrementar total de mensagens
+
+    # TODO: usar firestoreClient para consulta
+    # TODO: consultar Firestore com o hashnumber do usuário
+    # TODO: verificar se usuário não está com `banned`
+    # TODO: se estiver como banned finalizar função e não responde nada
+
+    # TODO: carregar limite do usuário ou usar `default`
+    # TODO: verificar se usuário ultrapassou limite diario ou total ou se é ilimitado
+    # TODO: caso tenha ultrapassado ele retorna mensagem padrão
+    # TODO: caso não tenha ultrapassado limite diario ou total continua
+    
+
+
     print()
     print()
     print(f"WhatsApp {whatsapp_number}")
@@ -109,6 +135,8 @@ def sms_reply():
         message_history.prepare_firestore() # Precisa disso para recarregar os dados com o ID novo
         bot_response = current_agent.run(human_input=message_body) #, session_id=request.form['From'])
         messages_to_send = split_message_by_line(bot_response)
+
+        # TODO: salvar no banco o consumo de token diário e total
         
         for msg in messages_to_send:
             resp.message(msg)
@@ -220,6 +248,8 @@ def async_transcribe_and_reply(media_url, current_agent, user_number, bot_number
     message_history.prepare_firestore() # Precisa disso para recarregar os dados com o ID novo
     bot_response = current_agent.run(human_input=message_body)
     messages_to_send = split_message_by_line(bot_response)
+    
+    # TODO: salvar no banco o consumo de token diário e total
     
     for msg in messages_to_send:
         twilio_client.messages.create(
