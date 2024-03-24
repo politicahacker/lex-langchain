@@ -17,6 +17,7 @@ As seguintes dependências são necessárias para executar o projeto:
 - python-dotenv
 - twilio
 - firebase_admin
+- langchain_openai
 - langchain-community
 - langchain-openai
 
@@ -34,6 +35,10 @@ Certifique-se de configurar as variáveis de ambiente necessárias:
 - `WEAVIATE_URL`: A URL para a instância Weaviate.
 - `WEAVIATE_API_KEY`: A chave de API para Weaviate.
 - `LIBRARY_DIR`: (Opcional) Caminho para a pasta da biblioteca.
+
+Salve a chave da conta de serviço do Firebase em `app/keys/politicalai-lex.json`
+
+
 
 ## Como Usar
 
